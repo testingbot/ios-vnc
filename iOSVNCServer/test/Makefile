@@ -7,6 +7,7 @@ test: libimobiledevice_screenshot_test
 clean:
 	rm libimobiledevice_screenshot_test
 	rm *.o
+	rm *.tiff
 
 libimobiledevice_screenshot_test.o: libimobiledevice_screenshot_test.c
 	clang -c -Wall -std=c99 libimobiledevice_screenshot_test.c
