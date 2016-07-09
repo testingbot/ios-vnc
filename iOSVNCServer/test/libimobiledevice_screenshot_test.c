@@ -6,8 +6,8 @@
 //  Copyright © 2016 TestingBot. All rights reserved.
 //
 
-#import <stdio.h>
-#import <time.h>
+#include <stdio.h>
+#include <time.h>
 
 #include <libimobiledevice/libimobiledevice.h>
 #include <libimobiledevice/lockdown.h>
