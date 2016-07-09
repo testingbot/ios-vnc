@@ -67,12 +67,12 @@ int main(void) {
         printf("Could not start screenshotr service! Remember that you have to mount the Developer disk image on your device if you want to use the screenshotr service.\n");
         return -1;
     }
-    
+
     if (service) {
         lockdownd_service_descriptor_free(service);
     }
-    
-    idevice_free(device);
 
+    idevice_free(device);
+    
     return 0;
 }
