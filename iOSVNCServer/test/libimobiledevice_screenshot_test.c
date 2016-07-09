@@ -41,6 +41,7 @@ int main(void) {
     if (service && service->port > 0) {
         if (screenshotr_client_new(device, service, &shotr) != SCREENSHOTR_E_SUCCESS) {
             printf("Could not connect to screenshotr!\n");
+            return -1;
         } else {
             st = time(NULL);
             for (i = 0; i < SAMPLE_SIZE; ++i) {
@@ -48,6 +49,7 @@ int main(void) {
                 uint64_t imgsize = 0;
                 if (screenshotr_take_screenshot(shotr, &imgdata, &imgsize) != SCREENSHOTR_E_SUCCESS) {
                     printf("Could not get screenshot!\n");
+                    return -1;
                 } else {
                     printf("Screenshot #%03d is %lld bytes long.\n", i + 1, imgsize);
                 }
@@ -63,6 +65,7 @@ int main(void) {
         }
     } else {
         printf("Could not start screenshotr service! Remember that you have to mount the Developer disk image on your device if you want to use the screenshotr service.\n");
+        return -1;
     }
     
     if (service) {
