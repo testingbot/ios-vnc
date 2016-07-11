@@ -62,7 +62,7 @@
 			buildPhases = (
 			);
 			buildToolPath = /usr/bin/make;
-			buildWorkingDirectory = /Users/pietrasm/Developer/TestingBot/iOSVNCServer/iOSVNCServer/test;
+			buildWorkingDirectory = "$(PROJECT_DIR)/iOSVNCServer/test";
 			dependencies = (
 			);
 			name = test;
