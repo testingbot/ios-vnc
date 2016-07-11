@@ -6,38 +6,14 @@
 	objectVersion = 46;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		6287ECB91D2275C600CC44E1 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 6287ECB81D2275C600CC44E1 /* main.c */; };
-/* End PBXBuildFile section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		6287ECB31D2275C600CC44E1 /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 1;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
-		6287ECB51D2275C600CC44E1 /* iOSVNCServer */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = iOSVNCServer; sourceTree = BUILT_PRODUCTS_DIR; };
+		623236251D3163CF001EBAD9 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		6232362A1D32883C001EBAD9 /* iosscreenshot.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = iosscreenshot.c; sourceTree = "<group>"; };
+		6232362B1D32883C001EBAD9 /* iosscreenshot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iosscreenshot.h; sourceTree = "<group>"; };
 		6287ECB81D2275C600CC44E1 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		6287ECC41D227D2200CC44E1 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		6287ECC51D227EE000CC44E1 /* libimobiledevice_screenshot_test.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = libimobiledevice_screenshot_test.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
-
-/* Begin PBXFrameworksBuildPhase section */
-		6287ECB21D2275C600CC44E1 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		6287ECAC1D2275C600CC44E1 = {
@@ -51,7 +27,6 @@
 		6287ECB61D2275C600CC44E1 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				6287ECB51D2275C600CC44E1 /* iOSVNCServer */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -59,7 +34,10 @@
 		6287ECB71D2275C600CC44E1 /* iOSVNCServer */ = {
 			isa = PBXGroup;
 			children = (
+				623236251D3163CF001EBAD9 /* Makefile */,
 				6287ECB81D2275C600CC44E1 /* main.c */,
+				6232362B1D32883C001EBAD9 /* iosscreenshot.h */,
+				6232362A1D32883C001EBAD9 /* iosscreenshot.c */,
 				6287ECC31D227D2200CC44E1 /* test */,
 			);
 			path = iOSVNCServer;
@@ -91,27 +69,21 @@
 			passBuildSettingsInEnvironment = 0;
 			productName = test;
 		};
-/* End PBXLegacyTarget section */
-
-/* Begin PBXNativeTarget section */
-		6287ECB41D2275C600CC44E1 /* iOSVNCServer */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 6287ECBC1D2275C600CC44E1 /* Build configuration list for PBXNativeTarget "iOSVNCServer" */;
+		6232362D1D33D5A9001EBAD9 /* iOSVNCServer */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION)";
+			buildConfigurationList = 6232362E1D33D5A9001EBAD9 /* Build configuration list for PBXLegacyTarget "iOSVNCServer" */;
 			buildPhases = (
-				6287ECB11D2275C600CC44E1 /* Sources */,
-				6287ECB21D2275C600CC44E1 /* Frameworks */,
-				6287ECB31D2275C600CC44E1 /* CopyFiles */,
 			);
-			buildRules = (
-			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = "$(PROJECT_DIR)/iOSVNCServer";
 			dependencies = (
 			);
 			name = iOSVNCServer;
+			passBuildSettingsInEnvironment = 0;
 			productName = iOSVNCServer;
-			productReference = 6287ECB51D2275C600CC44E1 /* iOSVNCServer */;
-			productType = "com.apple.product-type.tool";
 		};
-/* End PBXNativeTarget section */
+/* End PBXLegacyTarget section */
 
 /* Begin PBXProject section */
 		6287ECAD1D2275C600CC44E1 /* Project object */ = {
@@ -123,7 +95,7 @@
 					6229E7001D23B2A10021C8C7 = {
 						CreatedOnToolsVersion = 7.3.1;
 					};
-					6287ECB41D2275C600CC44E1 = {
+					6232362D1D33D5A9001EBAD9 = {
 						CreatedOnToolsVersion = 7.3.1;
 					};
 				};
@@ -140,22 +112,11 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				6287ECB41D2275C600CC44E1 /* iOSVNCServer */,
+				6232362D1D33D5A9001EBAD9 /* iOSVNCServer */,
 				6229E7001D23B2A10021C8C7 /* test */,
 			);
 		};
 /* End PBXProject section */
-
-/* Begin PBXSourcesBuildPhase section */
-		6287ECB11D2275C600CC44E1 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				6287ECB91D2275C600CC44E1 /* main.c in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
 		6229E7011D23B2A10021C8C7 /* Debug */ = {
@@ -172,6 +133,29 @@
 			name = Debug;
 		};
 		6229E7021D23B2A10021C8C7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		6232362F1D33D5A9001EBAD9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEBUGGING_SYMBOLS = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		623236301D33D5A9001EBAD9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
@@ -262,20 +246,6 @@
 			};
 			name = Release;
 		};
-		6287ECBD1D2275C600CC44E1 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Debug;
-		};
-		6287ECBE1D2275C600CC44E1 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -286,21 +256,21 @@
 				6229E7021D23B2A10021C8C7 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6232362E1D33D5A9001EBAD9 /* Build configuration list for PBXLegacyTarget "iOSVNCServer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6232362F1D33D5A9001EBAD9 /* Debug */,
+				623236301D33D5A9001EBAD9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
 		};
 		6287ECB01D2275C600CC44E1 /* Build configuration list for PBXProject "iOSVNCServer" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				6287ECBA1D2275C600CC44E1 /* Debug */,
 				6287ECBB1D2275C600CC44E1 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		6287ECBC1D2275C600CC44E1 /* Build configuration list for PBXNativeTarget "iOSVNCServer" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				6287ECBD1D2275C600CC44E1 /* Debug */,
-				6287ECBE1D2275C600CC44E1 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
