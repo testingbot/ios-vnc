@@ -59,7 +59,7 @@ int main(int argc,char** argv) {
 
     rfbInitServer(rfbScreen);
     rfbRunEventLoop(rfbScreen, -1, TRUE);
-    while (TRUE) {
+    while (rfbIsActive(rfbScreen)) {
         if (iosss_take(handle, &imgData, &imgSize)) {
             fputs("ERROR: Cannot take a screenshot.\n", stderr);
             return -1;
