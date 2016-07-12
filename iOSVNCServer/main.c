@@ -15,9 +15,9 @@
 
 #include "iosscreenshot.h"
 
-int extract_png(png_bytep png, png_size_t png_size,
-                 png_uint_32 *width, png_uint_32 *height,
-                 png_bytep *raw, png_size_t *raw_size);
+static int extract_png(png_bytep png, png_size_t png_size,
+                       png_uint_32 *width, png_uint_32 *height,
+                       png_bytep *raw, png_size_t *raw_size);
 
 int main(int argc,char** argv) {
     rfbScreenInfoPtr rfbScreen;
@@ -82,9 +82,9 @@ int main(int argc,char** argv) {
     return 0;
 }
 
-int extract_png(png_bytep png, png_size_t png_size,
-                 png_uint_32 *width, png_uint_32 *height,
-                 png_bytep *raw, png_size_t *raw_size) {
+static int extract_png(png_bytep png, png_size_t png_size,
+                       png_uint_32 *width, png_uint_32 *height,
+                       png_bytep *raw, png_size_t *raw_size) {
     png_image image;
     memset(&image, 0, sizeof(image));
     image.version = PNG_IMAGE_VERSION;
