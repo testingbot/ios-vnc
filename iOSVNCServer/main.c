@@ -15,9 +15,26 @@
 
 #include "iosscreenshot.h"
 
+typedef enum {
+    TapRecognitionStateNotRecognized = 0,
+    TapRecognitionStateRecognizing
+} TapRecognitionState;
+
+typedef struct {
+    int lastX, lastY;
+    TapRecognitionState tapRecognitionState;
+} ClientData;
+
 static int extract_png(png_bytep png, png_size_t png_size,
                        png_uint_32 *width, png_uint_32 *height,
                        png_bytep *raw, png_size_t *raw_size);
+
+static enum rfbNewClientAction initClient(rfbClientPtr client);
+static void deinitClient(rfbClientPtr client);
+
+static void ptrHandler(int buttonMask, int x, int y, rfbClientPtr client);
+
+static int recognizeTap(int buttonMask, int x, int y, ClientData *clientData);
 
 int main(int argc,char** argv) {
     rfbScreenInfoPtr rfbScreen;
@@ -49,6 +66,8 @@ int main(int argc,char** argv) {
     rfbScreen->desktopName = "TestingBot";
     rfbScreen->alwaysShared = TRUE;
     rfbScreen->port = 5901;
+    rfbScreen->newClientHook = initClient;
+    rfbScreen->ptrAddEvent = ptrHandler;
 
     if (!(rfbScreen->frameBuffer = malloc(rawSize))) {
         fputs("ERROR: Cannot allocate memory.\n", stderr);
@@ -111,6 +130,51 @@ static int extract_png(png_bytep png, png_size_t png_size,
         *raw_size = -1;
         *raw = NULL;
         return -1;
+    }
+    return 0;
+}
+
+static enum rfbNewClientAction initClient(rfbClientPtr client) {
+    client->clientData = calloc(sizeof(ClientData), 1);
+    client->clientGoneHook = deinitClient;
+    return RFB_CLIENT_ACCEPT;
+}
+
+static void deinitClient(rfbClientPtr client) {
+    free(client->clientData);
+    client->clientData = NULL;
+}
+
+static void ptrHandler(int buttonMask, int x, int y, rfbClientPtr client) {
+    ClientData *clientData = client->clientData;
+    if (x >= 0 && x < client->screen->width &&
+        y >= 0 && y < client->screen->height) {
+        if (recognizeTap(buttonMask, x, y, clientData)) {
+            puts("Tap Recognized");
+        }
+
+        clientData->lastX = x;
+        clientData->lastY = y;
+    }
+}
+
+static int recognizeTap(int buttonMask, int x, int y, ClientData *clientData) {
+    if (x == clientData->lastX &&
+        y == clientData->lastY) {
+        switch (clientData->tapRecognitionState) {
+            case TapRecognitionStateNotRecognized:
+                if (buttonMask) {
+                    clientData->tapRecognitionState = TapRecognitionStateRecognizing;
+                }
+                break;
+            case TapRecognitionStateRecognizing:
+                if (!buttonMask) {
+                    return 1;
+                }
+                break;
+        }
+    } else {
+        clientData->tapRecognitionState = TapRecognitionStateNotRecognized;
     }
     return 0;
 }
