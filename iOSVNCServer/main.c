@@ -50,7 +50,7 @@ int main(int argc,char** argv) {
     rfbScreen->alwaysShared = TRUE;
     rfbScreen->port = 5901;
 
-    if (!(rfbScreen->frameBuffer = (char*)malloc(rawSize))) {
+    if (!(rfbScreen->frameBuffer = malloc(rawSize))) {
         fputs("ERROR: Cannot allocate memory.\n", stderr);
         return -1;
     }
