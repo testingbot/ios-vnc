@@ -20,9 +20,17 @@ typedef enum {
     TapRecognitionStateRecognizing
 } TapRecognitionState;
 
+typedef enum {
+    DragRecognitionStateNotRecognized = 0,
+    DragRecognitionStateRecognizing,
+    DragRecognitionStateRecognized
+} DragRecognitionState;
+
 typedef struct {
     int lastX, lastY;
     TapRecognitionState tapRecognitionState;
+    DragRecognitionState dragRecognitionState;
+    int dragStartX, dragStartY;
 } ClientData;
 
 static int extract_png(png_bytep png, png_size_t png_size,
@@ -35,6 +43,7 @@ static void deinitClient(rfbClientPtr client);
 static void ptrHandler(int buttonMask, int x, int y, rfbClientPtr client);
 
 static int recognizeTap(int buttonMask, int x, int y, ClientData *clientData);
+static int recognizeDrag(int buttonMask, int x, int y, ClientData *clientData);
 
 int main(int argc,char** argv) {
     rfbScreenInfoPtr rfbScreen;
@@ -152,6 +161,9 @@ static void ptrHandler(int buttonMask, int x, int y, rfbClientPtr client) {
         if (recognizeTap(buttonMask, x, y, clientData)) {
             puts("Tap Recognized");
         }
+        if (recognizeDrag(buttonMask, x, y, clientData)) {
+            puts("Drag Recognized");
+        }
 
         clientData->lastX = x;
         clientData->lastY = y;
@@ -175,6 +187,32 @@ static int recognizeTap(int buttonMask, int x, int y, ClientData *clientData) {
         }
     } else {
         clientData->tapRecognitionState = TapRecognitionStateNotRecognized;
+    }
+    return 0;
+}
+
+static int recognizeDrag(int buttonMask, int x, int y, ClientData *clientData) {
+    if (buttonMask) {
+        switch (clientData->dragRecognitionState) {
+            case DragRecognitionStateNotRecognized:
+                clientData->dragStartX = x;
+                clientData->dragStartY = y;
+                clientData->dragRecognitionState = DragRecognitionStateRecognizing;
+                break;
+            case DragRecognitionStateRecognizing:
+                if (x != clientData->dragStartX ||
+                    y != clientData->dragStartY) {
+                    clientData->dragRecognitionState = DragRecognitionStateRecognized;
+                }
+                break;
+            case DragRecognitionStateRecognized:
+                break;
+        }
+    } else if (clientData->dragRecognitionState == DragRecognitionStateRecognized) {
+        clientData->dragRecognitionState = DragRecognitionStateNotRecognized;
+        return 1;
+    } else {
+        clientData->dragRecognitionState = DragRecognitionStateNotRecognized;
     }
     return 0;
 }
