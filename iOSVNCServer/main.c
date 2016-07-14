@@ -8,12 +8,16 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <getopt.h>
 
 #include <rfb/rfb.h>
 #include <rfb/keysym.h>
 #include <png.h>
 
 #include "iosscreenshot.h"
+
+#define DEFAULT_PORT 5901
+#define DEFAULT_SCALE_FACTOR 2.0
 
 typedef enum {
     TapRecognitionStateNotRecognized = 0,
@@ -33,6 +37,12 @@ typedef struct {
     int dragStartX, dragStartY;
 } ClientData;
 
+static int parseArgs(int argc, char **argv,
+                     const char **UDID,
+                     long int *port,
+                     const char **HTTPHost, long int *HTTPPort, const char **HTTPSessionID,
+                     float *scaleFactor);
+
 static int extract_png(png_bytep png, png_size_t png_size,
                        png_uint_32 *width, png_uint_32 *height,
                        png_bytep *raw, png_size_t *raw_size);
@@ -46,7 +56,14 @@ static void kbdHandler(rfbBool down, rfbKeySym key, rfbClientPtr client);
 static int recognizeTap(int buttonMask, int x, int y, ClientData *clientData);
 static int recognizeDrag(int buttonMask, int x, int y, ClientData *clientData);
 
-int main(int argc,char** argv) {
+int main(int argc, char **argv) {
+    const char *UDID = NULL;
+    long int port = DEFAULT_PORT;
+    const char *HTTPHost = NULL;
+    long int HTTPPort = -1;
+    const char *HTTPSessionID = NULL;
+    float scaleFactor = DEFAULT_SCALE_FACTOR;
+
     rfbScreenInfoPtr rfbScreen;
     iosss_handle_t handle;
     void *imgData = NULL;
@@ -54,6 +71,14 @@ int main(int argc,char** argv) {
     uint32_t width, height;
     void *rawData = NULL;
     size_t rawSize = 0;
+
+    if (parseArgs(argc, argv,
+                  &UDID,
+                  &port,
+                  &HTTPHost, &HTTPPort, &HTTPSessionID,
+                  &scaleFactor)) {
+        return -1;
+    }
 
     if (!(handle = iosss_create())) {
         fputs("ERROR: Cannot create an iosss_handle_t.\n", stderr);
@@ -75,7 +100,7 @@ int main(int argc,char** argv) {
     }
     rfbScreen->desktopName = "TestingBot";
     rfbScreen->alwaysShared = TRUE;
-    rfbScreen->port = 5901;
+    rfbScreen->port = port;
     rfbScreen->newClientHook = initClient;
     rfbScreen->ptrAddEvent = ptrHandler;
     rfbScreen->kbdAddEvent = kbdHandler;
@@ -109,6 +134,55 @@ int main(int argc,char** argv) {
         rfbMarkRectAsModified(rfbScreen, 0, 0, width, height);
     }
 
+    return 0;
+}
+
+static int parseArgs(int argc, char **argv,
+                     const char **UDID,
+                     long int *port,
+                     const char **HTTPHost, long int *HTTPPort, const char **HTTPSessionID,
+                     float *scaleFactor) {
+    struct option longOptions[] = {
+        {"UDID",          required_argument, NULL, 'u'},
+        {"port",          required_argument, NULL, 'p'},
+        {"HTTPHost",      required_argument, NULL, 'H'},
+        {"HTTPPort",      required_argument, NULL, 'P'},
+        {"HTTPSessionID", required_argument, NULL, 'S'},
+        {"scaleFactor",   required_argument, NULL, 's'},
+        {0, 0, 0, 0}
+    };
+    int option;
+    int option_index = 0;
+
+    while ((option = getopt_long(argc, argv,
+                                 "u:p:H:P:S:s:",
+                                 longOptions, &option_index)) != -1) {
+        switch (option) {
+            case 'u':
+                *UDID = optarg;
+                break;
+            case 'p':
+                *port = atol(optarg);
+                break;
+            case 'H':
+                *HTTPHost = optarg;
+                break;
+            case 'P':
+                *HTTPPort = atol(optarg);
+                break;
+            case 'S':
+                *HTTPSessionID = optarg;
+                break;
+            case 's':
+                *scaleFactor = atof(optarg);
+                break;
+            case '?':
+                return -1;
+            default:
+                fputs("ERROR: Arguments parsing error.\n", stderr);
+                return -1;
+        }
+    }
     return 0;
 }
 
