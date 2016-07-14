@@ -19,10 +19,9 @@ struct iosss_handle_t {
     screenshotr_client_t screenshotr;
 };
 
-iosss_handle_t iosss_create() {
+iosss_handle_t iosss_create(const char *UDID) {
     struct iosss_handle_t *handle_struct = malloc(sizeof(struct iosss_handle_t));
-
-    if (IDEVICE_E_SUCCESS != idevice_new(&handle_struct->device, NULL)) {
+    if (IDEVICE_E_SUCCESS != idevice_new(&handle_struct->device, UDID)) {
         fputs("ERROR: No device found, is it plugged in?\n", stderr);
         return NULL;
     }

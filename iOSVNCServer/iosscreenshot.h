@@ -13,7 +13,7 @@
 
 typedef void *iosss_handle_t;
 
-iosss_handle_t iosss_create();
+iosss_handle_t iosss_create(const char *UDID);
 int iosss_take(iosss_handle_t handle, void **imgdata, size_t *imgsize);
 void iosss_free(iosss_handle_t handle);
 

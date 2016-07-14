@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    if (!(handle = iosss_create())) {
+    if (!(handle = iosss_create(UDID))) {
         fputs("ERROR: Cannot create an iosss_handle_t.\n", stderr);
         return -1;
     }
