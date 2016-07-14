@@ -41,6 +41,7 @@ static enum rfbNewClientAction initClient(rfbClientPtr client);
 static void deinitClient(rfbClientPtr client);
 
 static void ptrHandler(int buttonMask, int x, int y, rfbClientPtr client);
+static void kbdHandler(rfbBool down, rfbKeySym key, rfbClientPtr client);
 
 static int recognizeTap(int buttonMask, int x, int y, ClientData *clientData);
 static int recognizeDrag(int buttonMask, int x, int y, ClientData *clientData);
@@ -77,6 +78,7 @@ int main(int argc,char** argv) {
     rfbScreen->port = 5901;
     rfbScreen->newClientHook = initClient;
     rfbScreen->ptrAddEvent = ptrHandler;
+    rfbScreen->kbdAddEvent = kbdHandler;
 
     if (!(rfbScreen->frameBuffer = malloc(rawSize))) {
         fputs("ERROR: Cannot allocate memory.\n", stderr);
@@ -167,6 +169,22 @@ static void ptrHandler(int buttonMask, int x, int y, rfbClientPtr client) {
 
         clientData->lastX = x;
         clientData->lastY = y;
+    }
+}
+
+static void kbdHandler(rfbBool down, rfbKeySym key, rfbClientPtr client) {
+    if (down) {
+        switch (key) {
+            case XK_Return:
+                puts("Return Key Pressed");
+                break;
+            case XK_BackSpace:
+                puts("Back Space Key Pressed");
+                break;
+            default:
+                printf("\"%c\" Key Pressed\n", key);
+                break;
+        }
     }
 }
 
