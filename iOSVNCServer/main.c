@@ -334,6 +334,7 @@ static int recognizeTap(int buttonMask, int x, int y, ClientData *clientData) {
                 break;
             case TapRecognitionStateRecognizing:
                 if (!buttonMask) {
+                    clientData->tapRecognitionState = TapRecognitionStateNotRecognized;
                     return 1;
                 }
                 break;
