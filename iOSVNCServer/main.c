@@ -92,26 +92,26 @@ int main(int argc, char **argv) {
                   &port,
                   &HTTPHost, &HTTPPort, &HTTPSessionID,
                   &scaleFactor)) {
-        return -1;
+        exit(-1);
     }
 
     if (!(handle = iosss_create(UDID))) {
         fputs("ERROR: Cannot create an iosss_handle_t.\n", stderr);
-        return -1;
+        exit(-1);
     }
     if (iosss_take(handle, &imgData, &imgSize)) {
         fputs("ERROR: Cannot take a screenshot.\n", stderr);
-        return -1;
+        exit(-1);
     }
     if (extract_png(imgData, imgSize, &width, &height, (png_bytep *)&rawData, &rawSize)) {
         fputs("ERROR: Cannot decode PNG.\n", stderr);
-        return -1;
+        exit(-1);
     }
     free(imgData);
 
     if (!(rfbScreen = rfbGetScreen(&argc, argv, width, height, 8, 3, 4))) {
         fputs("ERROR: Cannot create a rfbScreenInfoPtr.\n", stderr);
-        return -1;
+        exit(-1);
     }
     rfbScreen->desktopName = "TestingBot";
     rfbScreen->alwaysShared = TRUE;
@@ -122,21 +122,48 @@ int main(int argc, char **argv) {
 
     if (!(rfbScreen->frameBuffer = malloc(rawSize))) {
         fputs("ERROR: Cannot allocate memory.\n", stderr);
-        return -1;
+        exit(-1);
     }
     memcpy(rfbScreen->frameBuffer, rawData, rawSize);
     free(rawData);
 
-    screenData = malloc(sizeof(ScreenData));
-    curl_global_init(CURL_GLOBAL_DEFAULT);
-    screenData->curlHandle = curl_easy_init();
-    screenData->curlHeaders = curl_slist_append(NULL, "Content-Type: application/json");
-    curl_easy_setopt(screenData->curlHandle, CURLOPT_HTTPHEADER, screenData->curlHeaders);
-    curl_easy_setopt(screenData->curlHandle, CURLOPT_PORT, HTTPPort);
+    if (!(screenData = malloc(sizeof(ScreenData)))) {
+        fputs("ERROR: Cannot allocate memory.\n", stderr);
+        exit(-1);
+    }
+    if (curl_global_init(CURL_GLOBAL_DEFAULT) != CURLE_OK) {
+        fputs("ERROR: Cannot initialize libcurl.\n", stderr);
+        exit(-1);
+    }
+    if (!(screenData->curlHandle = curl_easy_init())){
+        fputs("ERROR: Cannot create a libcurl handle.\n", stderr);
+        exit(-1);
+    }
+    if (!(screenData->curlHeaders = curl_slist_append(NULL, "Content-Type: application/json"))) {
+        fputs("ERROR: Cannot initialize HTTP headers.\n", stderr);
+        exit(-1);
+    }
+    if (curl_easy_setopt(screenData->curlHandle, CURLOPT_HTTPHEADER, screenData->curlHeaders) != CURLE_OK) {
+        fputs("ERROR: Cannot set HTTP headers.\n", stderr);
+        exit(-1);
+    }
+    if (curl_easy_setopt(screenData->curlHandle, CURLOPT_PORT, HTTPPort) != CURLE_OK) {
+        fputs("ERROR: Cannot set a port.\n", stderr);
+        exit(-1);
+    }
 
-    screenData->tapURL = createURL(HTTPHost, HTTPSessionID, "tap/0");
-    screenData->dragURL = createURL(HTTPHost, HTTPSessionID, "uiaTarget/0/dragfromtoforduration");
-    screenData->keyURL = createURL(HTTPHost, HTTPSessionID, "keys");
+    if (!(screenData->tapURL = createURL(HTTPHost, HTTPSessionID, "tap/0"))) {
+        fputs("ERROR: Cannot create a tap URL.\n", stderr);
+        exit(-1);
+    }
+    if (!(screenData->dragURL = createURL(HTTPHost, HTTPSessionID, "uiaTarget/0/dragfromtoforduration"))){
+        fputs("ERROR: Cannot create a drag URL.\n", stderr);
+        exit(-1);
+    }
+    if (!(screenData->keyURL = createURL(HTTPHost, HTTPSessionID, "keys"))) {
+        fputs("ERROR: Cannot create a keys URL.\n", stderr);
+        exit(-1);
+    }
     screenData->scaleFactor = scaleFactor;
     rfbScreen->screenData = screenData;
 
@@ -145,17 +172,17 @@ int main(int argc, char **argv) {
     while (rfbIsActive(rfbScreen)) {
         if (iosss_take(handle, &imgData, &imgSize)) {
             fputs("ERROR: Cannot take a screenshot.\n", stderr);
-            return -1;
+            exit(-1);
         }
         if (extract_png(imgData, imgSize, &width, &height, (png_bytep *)&rawData, &rawSize)) {
             fputs("ERROR: Cannot decode PNG.\n", stderr);
-            return -1;
+            exit(-1);
         }
         free(imgData);
         if (width != rfbScreen->width ||
             height != rfbScreen->height) {
             fputs("ERROR: Unexpected change of the screen size.\n", stderr);
-            return -1;
+            exit(-1);
         }
         memcpy(rfbScreen->frameBuffer, rawData, rawSize);
         free(rawData);
@@ -174,7 +201,7 @@ int main(int argc, char **argv) {
     screenData = NULL;
     curl_global_cleanup();
 
-    return 0;
+    exit(0);
 }
 
 static int parseArgs(int argc, char **argv,
@@ -277,21 +304,45 @@ static void ptrHandler(int buttonMask, int x, int y, rfbClientPtr client) {
         y >= 0 && y < client->screen->height) {
         if (recognizeTap(buttonMask, x, y, clientData)) {
             char json[11 + 4 + 4 + 1];
-            curl_easy_setopt(screenData->curlHandle, CURLOPT_URL, screenData->tapURL);
+            if (curl_easy_setopt(screenData->curlHandle, CURLOPT_URL, screenData->tapURL) != CURLE_OK) {
+                fputs("ERROR: Cannot set an URL.\n", stderr);
+                exit(-1);
+            }
 
-            sprintf(json, "{\"x\":%d,\"y\":%d}", SCALE(x), SCALE(y));
-            curl_easy_setopt(screenData->curlHandle, CURLOPT_POSTFIELDS, json);
-            curl_easy_perform(screenData->curlHandle);
+            if (sprintf(json, "{\"x\":%d,\"y\":%d}", SCALE(x), SCALE(y)) < 0) {
+                fputs("ERROR: Cannot create JSON.\n", stderr);
+                exit(-1);
+            }
+            if (curl_easy_setopt(screenData->curlHandle, CURLOPT_POSTFIELDS, json) != CURLE_OK) {
+                fputs("ERROR: Cannot set JSON.\n", stderr);
+                exit(-1);
+            }
+            if (curl_easy_perform(screenData->curlHandle) != CURLE_OK) {
+                fputs("ERROR: Cannot send a request.\n", stderr);
+                exit(-1);
+            }
         }
         if (recognizeDrag(buttonMask, x, y, clientData)) {
             char json[46 + 4 + 4 + 4 + 4 + 1];
-            curl_easy_setopt(screenData->curlHandle, CURLOPT_URL, screenData->dragURL);
+            if (curl_easy_setopt(screenData->curlHandle, CURLOPT_URL, screenData->dragURL) != CURLE_OK) {
+                fputs("ERROR: Cannot set an URL.\n", stderr);
+                exit(-1);
+            }
 
-            sprintf(json, "{\"fromX\":%d,\"fromY\":%d,\"toX\":%d,\"toY\":%d,\"duration\":0}",
-                    SCALE(clientData->dragStartX), SCALE(clientData->dragStartY),
-                    SCALE(x), SCALE(y));
-            curl_easy_setopt(screenData->curlHandle, CURLOPT_POSTFIELDS, json);
-            curl_easy_perform(screenData->curlHandle);
+            if (sprintf(json, "{\"fromX\":%d,\"fromY\":%d,\"toX\":%d,\"toY\":%d,\"duration\":0}",
+                        SCALE(clientData->dragStartX), SCALE(clientData->dragStartY),
+                        SCALE(x), SCALE(y)) < 0) {
+                fputs("ERROR: Cannot create JSON.\n", stderr);
+                exit(-1);
+            }
+            if (curl_easy_setopt(screenData->curlHandle, CURLOPT_POSTFIELDS, json) != CURLE_OK) {
+                fputs("ERROR: Cannot set JSON.\n", stderr);
+                exit(-1);
+            }
+            if (curl_easy_perform(screenData->curlHandle) != CURLE_OK) {
+                fputs("ERROR: Cannot send a request.\n", stderr);
+                exit(-1);
+            }
         }
 
         clientData->lastX = x;
@@ -319,11 +370,23 @@ static void kbdHandler(rfbBool down, rfbKeySym key, rfbClientPtr client) {
                 break;
         }
         if (strlen(character) > 0) {
-            curl_easy_setopt(screenData->curlHandle, CURLOPT_URL, screenData->keyURL);
+            if (curl_easy_setopt(screenData->curlHandle, CURLOPT_URL, screenData->keyURL) != CURLE_OK) {
+                fputs("ERROR: Cannot set an URL.\n", stderr);
+                exit(-1);
+            }
 
-            sprintf(json, "{\"value\":[\"%s\"]}", character);
-            curl_easy_setopt(screenData->curlHandle, CURLOPT_POSTFIELDS, json);
-            curl_easy_perform(screenData->curlHandle);
+            if (sprintf(json, "{\"value\":[\"%s\"]}", character) < 0) {
+                fputs("ERROR: Cannot create JSON.\n", stderr);
+                exit(-1);
+            }
+            if (curl_easy_setopt(screenData->curlHandle, CURLOPT_POSTFIELDS, json) != CURLE_OK) {
+                fputs("ERROR: Cannot set JSON.\n", stderr);
+                exit(-1);
+            }
+            if (curl_easy_perform(screenData->curlHandle) != CURLE_OK) {
+                fputs("ERROR: Cannot send a request.\n", stderr);
+                exit(-1);
+            }
         }
     }
 }
@@ -380,6 +443,11 @@ static char *createURL(const char *host, const char *sessionID, const char *acti
     char *URL;
     URL = malloc((17 + strlen(host) + strlen(sessionID) + strlen(actionPath) + 1)
                  * sizeof(char));
-    sprintf(URL, "http://%s/session/%s/%s", host, sessionID, actionPath);
+    if (URL) {
+        if (sprintf(URL, "http://%s/session/%s/%s", host, sessionID, actionPath) < 0) {
+            free(URL);
+            URL = NULL;
+        }
+    }
     return URL;
 }
