@@ -311,15 +311,20 @@ static void kbdHandler(rfbBool down, rfbKeySym key, rfbClientPtr client) {
             case XK_BackSpace:
                 strcpy(character, "\\b");
                 break;
+            case XK_Num_Lock:
+                strcpy(character, "");
+                break;
             default:
                 sprintf(character, "%c", key);
                 break;
         }
-        curl_easy_setopt(screenData->curlHandle, CURLOPT_URL, screenData->keyURL);
+        if (strlen(character) > 0) {
+            curl_easy_setopt(screenData->curlHandle, CURLOPT_URL, screenData->keyURL);
 
-        sprintf(json, "{\"value\":[\"%s\"]}", character);
-        curl_easy_setopt(screenData->curlHandle, CURLOPT_POSTFIELDS, json);
-        curl_easy_perform(screenData->curlHandle);
+            sprintf(json, "{\"value\":[\"%s\"]}", character);
+            curl_easy_setopt(screenData->curlHandle, CURLOPT_POSTFIELDS, json);
+            curl_easy_perform(screenData->curlHandle);
+        }
     }
 }
 
