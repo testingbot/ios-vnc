@@ -300,6 +300,9 @@ static void deinitClient(rfbClientPtr client) {
 static void ptrHandler(int buttonMask, int x, int y, rfbClientPtr client) {
     ScreenData *screenData = client->screen->screenData;
     ClientData *clientData = client->clientData;
+    if (buttonMask > 1) {
+        return;
+    }
     if (x >= 0 && x < client->screen->width &&
         y >= 0 && y < client->screen->height) {
         if (recognizeTap(buttonMask, x, y, clientData)) {
