@@ -204,6 +204,10 @@ int main(int argc, char **argv) {
     exit(0);
 }
 
+static void printHelp() {
+    fputs("\nArguments below with * are required!\n\n-u *               UDID of the device\n-p                 VNC Port 5901 by default\n-H *               HttpHost that does the interactions\n-P *               HttpPort that does the interactions\n-S *               HttpSessionID\n-s                 ScaleFactor, default 2\n", stderr);
+}
+
 static int parseArgs(int argc, char **argv,
                      const char **UDID,
                      long int *port,
@@ -244,11 +248,19 @@ static int parseArgs(int argc, char **argv,
                 *scaleFactor = atof(optarg);
                 break;
             case '?':
+            case 'h':
+                printHelp();
                 return -1;
             default:
                 fputs("ERROR: Arguments parsing error.\n", stderr);
                 return -1;
         }
+    }
+
+    if (*HTTPPort == -1) {
+        fputs("Invalid arguments! Please see the required arguments:\n", stderr);
+        printHelp();
+        exit(-1);
     }
     return 0;
 }
@@ -298,11 +310,11 @@ static void deinitClient(rfbClientPtr client) {
 }
 
 static void ptrHandler(int buttonMask, int x, int y, rfbClientPtr client) {
-    ScreenData *screenData = client->screen->screenData;
-    ClientData *clientData = client->clientData;
     if (buttonMask > 1) {
         return;
     }
+    ScreenData *screenData = client->screen->screenData;
+    ClientData *clientData = client->clientData;
     if (x >= 0 && x < client->screen->width &&
         y >= 0 && y < client->screen->height) {
         if (recognizeTap(buttonMask, x, y, clientData)) {
