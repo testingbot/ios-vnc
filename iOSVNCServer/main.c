@@ -370,11 +370,15 @@ static void kbdHandler(rfbBool down, rfbKeySym key, rfbClientPtr client) {
     if (down) {
         char json[14 + 2 + 1];
         char character[2 + 1];
+        int validSpecialKey = 0;
+
         switch (key) {
             case XK_Return:
+                validSpecialKey = 1;
                 strcpy(character, "\\n");
                 break;
             case XK_BackSpace:
+                validSpecialKey = 1;
                 strcpy(character, "\\b");
                 break;
             case XK_Num_Lock:
@@ -383,6 +387,10 @@ static void kbdHandler(rfbBool down, rfbKeySym key, rfbClientPtr client) {
             default:
                 sprintf(character, "%c", key);
                 break;
+        }
+        if (!(key>=' ' && key<0x100) && validSpecialKey == 0) {
+            fprintf(stderr, "Invalid key %c", key);
+            return;
         }
         if (strlen(character) > 0) {
             if (curl_easy_setopt(screenData->curlHandle, CURLOPT_URL, screenData->keyURL) != CURLE_OK) {
