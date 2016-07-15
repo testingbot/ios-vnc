@@ -1,6 +1,6 @@
 CFLAGS = -Wall -std=c99 $(includes)
 LDFLAGS = -L /opt/local/lib
-LDLIBS = -l imobiledevice -l png -l vncserver
+LDLIBS = -l imobiledevice -l png -l vncserver -l curl
 includes = -I /opt/local/include
 
 iosvncserver: main.o iosscreenshot.o

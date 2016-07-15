@@ -13,11 +13,14 @@
 #include <rfb/rfb.h>
 #include <rfb/keysym.h>
 #include <png.h>
+#include <curl/curl.h>
 
 #include "iosscreenshot.h"
 
 #define DEFAULT_PORT 5901
 #define DEFAULT_SCALE_FACTOR 2.0
+
+#define SCALE(coordinate) (int)((float)(coordinate) / screenData->scaleFactor)
 
 typedef enum {
     TapRecognitionStateNotRecognized = 0,
@@ -29,6 +32,15 @@ typedef enum {
     DragRecognitionStateRecognizing,
     DragRecognitionStateRecognized
 } DragRecognitionState;
+
+typedef struct {
+    CURL *curlHandle;
+    struct curl_slist *curlHeaders;
+    char *tapURL;
+    char *dragURL;
+    char *keyURL;
+    float scaleFactor;
+} ScreenData;
 
 typedef struct {
     int lastX, lastY;
@@ -56,6 +68,8 @@ static void kbdHandler(rfbBool down, rfbKeySym key, rfbClientPtr client);
 static int recognizeTap(int buttonMask, int x, int y, ClientData *clientData);
 static int recognizeDrag(int buttonMask, int x, int y, ClientData *clientData);
 
+static char *createURL(const char *host, const char *sessionID, const char *actionPath);
+
 int main(int argc, char **argv) {
     const char *UDID = NULL;
     long int port = DEFAULT_PORT;
@@ -71,6 +85,7 @@ int main(int argc, char **argv) {
     uint32_t width, height;
     void *rawData = NULL;
     size_t rawSize = 0;
+    ScreenData *screenData;
 
     if (parseArgs(argc, argv,
                   &UDID,
@@ -112,6 +127,19 @@ int main(int argc, char **argv) {
     memcpy(rfbScreen->frameBuffer, rawData, rawSize);
     free(rawData);
 
+    screenData = malloc(sizeof(ScreenData));
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    screenData->curlHandle = curl_easy_init();
+    screenData->curlHeaders = curl_slist_append(NULL, "Content-Type: application/json");
+    curl_easy_setopt(screenData->curlHandle, CURLOPT_HTTPHEADER, screenData->curlHeaders);
+    curl_easy_setopt(screenData->curlHandle, CURLOPT_PORT, HTTPPort);
+
+    screenData->tapURL = createURL(HTTPHost, HTTPSessionID, "tap/0");
+    screenData->dragURL = createURL(HTTPHost, HTTPSessionID, "uiaTarget/0/dragfromtoforduration");
+    screenData->keyURL = createURL(HTTPHost, HTTPSessionID, "keys");
+    screenData->scaleFactor = scaleFactor;
+    rfbScreen->screenData = screenData;
+
     rfbInitServer(rfbScreen);
     rfbRunEventLoop(rfbScreen, -1, TRUE);
     while (rfbIsActive(rfbScreen)) {
@@ -133,6 +161,18 @@ int main(int argc, char **argv) {
         free(rawData);
         rfbMarkRectAsModified(rfbScreen, 0, 0, width, height);
     }
+
+    free(screenData->tapURL);
+    screenData->tapURL = NULL;
+    free(screenData->dragURL);
+    screenData->dragURL = NULL;
+    free(screenData->keyURL);
+    screenData->keyURL = NULL;
+    curl_slist_free_all(screenData->curlHeaders);
+    curl_easy_cleanup(screenData->curlHandle);
+    free(screenData);
+    screenData = NULL;
+    curl_global_cleanup();
 
     return 0;
 }
@@ -231,14 +271,27 @@ static void deinitClient(rfbClientPtr client) {
 }
 
 static void ptrHandler(int buttonMask, int x, int y, rfbClientPtr client) {
+    ScreenData *screenData = client->screen->screenData;
     ClientData *clientData = client->clientData;
     if (x >= 0 && x < client->screen->width &&
         y >= 0 && y < client->screen->height) {
         if (recognizeTap(buttonMask, x, y, clientData)) {
-            puts("Tap Recognized");
+            char json[11 + 4 + 4 + 1];
+            curl_easy_setopt(screenData->curlHandle, CURLOPT_URL, screenData->tapURL);
+
+            sprintf(json, "{\"x\":%d,\"y\":%d}", SCALE(x), SCALE(y));
+            curl_easy_setopt(screenData->curlHandle, CURLOPT_POSTFIELDS, json);
+            curl_easy_perform(screenData->curlHandle);
         }
         if (recognizeDrag(buttonMask, x, y, clientData)) {
-            puts("Drag Recognized");
+            char json[46 + 4 + 4 + 4 + 4 + 1];
+            curl_easy_setopt(screenData->curlHandle, CURLOPT_URL, screenData->dragURL);
+
+            sprintf(json, "{\"fromX\":%d,\"fromY\":%d,\"toX\":%d,\"toY\":%d,\"duration\":0}",
+                    SCALE(clientData->dragStartX), SCALE(clientData->dragStartY),
+                    SCALE(x), SCALE(y));
+            curl_easy_setopt(screenData->curlHandle, CURLOPT_POSTFIELDS, json);
+            curl_easy_perform(screenData->curlHandle);
         }
 
         clientData->lastX = x;
@@ -247,18 +300,26 @@ static void ptrHandler(int buttonMask, int x, int y, rfbClientPtr client) {
 }
 
 static void kbdHandler(rfbBool down, rfbKeySym key, rfbClientPtr client) {
+    ScreenData *screenData = client->screen->screenData;
     if (down) {
+        char json[14 + 2 + 1];
+        char character[2 + 1];
         switch (key) {
             case XK_Return:
-                puts("Return Key Pressed");
+                strcpy(character, "\\n");
                 break;
             case XK_BackSpace:
-                puts("Back Space Key Pressed");
+                strcpy(character, "\\b");
                 break;
             default:
-                printf("\"%c\" Key Pressed\n", key);
+                sprintf(character, "%c", key);
                 break;
         }
+        curl_easy_setopt(screenData->curlHandle, CURLOPT_URL, screenData->keyURL);
+
+        sprintf(json, "{\"value\":[\"%s\"]}", character);
+        curl_easy_setopt(screenData->curlHandle, CURLOPT_POSTFIELDS, json);
+        curl_easy_perform(screenData->curlHandle);
     }
 }
 
@@ -307,4 +368,12 @@ static int recognizeDrag(int buttonMask, int x, int y, ClientData *clientData) {
         clientData->dragRecognitionState = DragRecognitionStateNotRecognized;
     }
     return 0;
+}
+
+static char *createURL(const char *host, const char *sessionID, const char *actionPath) {
+    char *URL;
+    URL = malloc((17 + strlen(host) + strlen(sessionID) + strlen(actionPath) + 1)
+                 * sizeof(char));
+    sprintf(URL, "http://%s/session/%s/%s", host, sessionID, actionPath);
+    return URL;
 }
