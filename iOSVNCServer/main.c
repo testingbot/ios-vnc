@@ -40,6 +40,7 @@ typedef struct {
     char *dragURL;
     char *keyURL;
     float scaleFactor;
+    long int httpPort;
 } ScreenData;
 
 typedef struct {
@@ -48,6 +49,8 @@ typedef struct {
     DragRecognitionState dragRecognitionState;
     int dragStartX, dragStartY;
 } ClientData;
+
+char keyboardChars[200] = "";
 
 static int parseArgs(int argc, char **argv,
                      const char **UDID,
@@ -64,6 +67,7 @@ static void deinitClient(rfbClientPtr client);
 
 static void ptrHandler(int buttonMask, int x, int y, rfbClientPtr client);
 static void kbdHandler(rfbBool down, rfbKeySym key, rfbClientPtr client);
+static void keyboardQueuer();
 
 static int recognizeTap(int buttonMask, int x, int y, ClientData *clientData);
 static int recognizeDrag(int buttonMask, int x, int y, ClientData *clientData);
@@ -166,7 +170,12 @@ int main(int argc, char **argv) {
     }
     screenData->scaleFactor = scaleFactor;
     rfbScreen->screenData = screenData;
-
+    fprintf(stderr, "Current key %s", screenData->keyURL);
+    screenData->httpPort = HTTPPort;
+    
+    pthread_t tid;
+    pthread_create(&tid, NULL, &keyboardQueuer, screenData);
+    
     rfbInitServer(rfbScreen);
     rfbRunEventLoop(rfbScreen, -1, TRUE);
     while (rfbIsActive(rfbScreen)) {
@@ -365,6 +374,69 @@ static void ptrHandler(int buttonMask, int x, int y, rfbClientPtr client) {
     }
 }
 
+static void keyboardQueuer(void *args)
+{
+    ScreenData *screenData;
+    screenData = args;
+    CURL *curlHandle;
+    int charLen = 0;
+    char json[140 + 2 + 1];
+    while(TRUE)
+    {
+        sleep(0.5);
+        charLen = strlen(keyboardChars);
+        if (charLen > 0) {
+            
+            curlHandle = curl_easy_init();
+            fprintf(stderr, "Waiting... %s\n", keyboardChars);
+            
+            if (curl_easy_setopt(curlHandle, CURLOPT_URL, screenData->keyURL) != CURLE_OK) {
+                fputs("ERROR: Cannot set an URL.\n", stderr);
+            }
+
+            if (sprintf(json, "{\"value\":[\"%s\"]}", keyboardChars) < 0) {
+                fputs("ERROR: Cannot create JSON.\n", stderr);
+            }
+            
+            if (curl_easy_setopt(curlHandle, CURLOPT_HTTPHEADER, curl_slist_append(NULL, "Content-Type: application/json")) != CURLE_OK) {
+                fputs("ERROR: Cannot set HTTP headers.\n", stderr);
+            }
+            if (curl_easy_setopt(curlHandle, CURLOPT_PORT, screenData->httpPort) != CURLE_OK) {
+                fputs("ERROR: Cannot set a port.\n", stderr);
+            }
+            
+            if (curl_easy_setopt(curlHandle, CURLOPT_POSTFIELDS, json) != CURLE_OK) {
+                fputs("ERROR: Cannot set JSON.\n", stderr);
+            }
+            CURLcode res;
+            res = curl_easy_perform(curlHandle);
+            
+            if (res != CURLE_OK) {
+                fprintf(stderr, "%s", curl_easy_strerror(res));
+                fputs("ERROR: Cannot send a request.\n", stderr);
+            }
+            if (strlen(keyboardChars) > charLen) {
+                int len = (strlen(keyboardChars) - charLen);
+                fprintf(stderr, "Added keys %d , %d", charLen, len);
+                char* substr[(strlen(keyboardChars) + charLen)+1];
+                strncpy(substr, keyboardChars + charLen, len);
+                
+                substr[len] = '\0';
+                memset(&keyboardChars[0], 0, sizeof(keyboardChars));
+                strncpy(keyboardChars, substr, strlen(substr));
+                fprintf(stderr, "Added keys while processing %s\n", substr);
+                fprintf(stderr, "Added keys while processing %s\n", keyboardChars);
+            } else {
+                memset(&keyboardChars[0], 0, sizeof(keyboardChars));
+            }
+            json[0] = '\0';
+        }
+    }
+    
+    curl_easy_cleanup(curlHandle);
+}
+
+
 static void kbdHandler(rfbBool down, rfbKeySym key, rfbClientPtr client) {
     ScreenData *screenData = client->screen->screenData;
     if (down) {
@@ -393,23 +465,7 @@ static void kbdHandler(rfbBool down, rfbKeySym key, rfbClientPtr client) {
             return;
         }
         if (strlen(character) > 0) {
-            if (curl_easy_setopt(screenData->curlHandle, CURLOPT_URL, screenData->keyURL) != CURLE_OK) {
-                fputs("ERROR: Cannot set an URL.\n", stderr);
-                exit(-1);
-            }
-
-            if (sprintf(json, "{\"value\":[\"%s\"]}", character) < 0) {
-                fputs("ERROR: Cannot create JSON.\n", stderr);
-                exit(-1);
-            }
-            if (curl_easy_setopt(screenData->curlHandle, CURLOPT_POSTFIELDS, json) != CURLE_OK) {
-                fputs("ERROR: Cannot set JSON.\n", stderr);
-                exit(-1);
-            }
-            if (curl_easy_perform(screenData->curlHandle) != CURLE_OK) {
-                fputs("ERROR: Cannot send a request.\n", stderr);
-                exit(-1);
-            }
+            strcat(keyboardChars, character);
         }
     }
 }
