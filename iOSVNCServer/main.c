@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <getopt.h>
+#include <time.h>
 
 #include <rfb/rfb.h>
 #include <rfb/keysym.h>
@@ -67,7 +68,7 @@ static void deinitClient(rfbClientPtr client);
 
 static void ptrHandler(int buttonMask, int x, int y, rfbClientPtr client);
 static void kbdHandler(rfbBool down, rfbKeySym key, rfbClientPtr client);
-static void keyboardQueuer();
+static void *keyboardQueuer();
 
 static int recognizeTap(int buttonMask, int x, int y, ClientData *clientData);
 static int recognizeDrag(int buttonMask, int x, int y, ClientData *clientData);
@@ -374,7 +375,7 @@ static void ptrHandler(int buttonMask, int x, int y, rfbClientPtr client) {
     }
 }
 
-static void keyboardQueuer(void *args)
+static void *keyboardQueuer(void *args)
 {
     ScreenData *screenData;
     screenData = args;
@@ -383,7 +384,7 @@ static void keyboardQueuer(void *args)
     char json[140 + 2 + 1];
     while(TRUE)
     {
-        sleep(0.5);
+        usleep(300000);
         charLen = strlen(keyboardChars);
         if (charLen > 0) {
             
@@ -418,7 +419,8 @@ static void keyboardQueuer(void *args)
             if (strlen(keyboardChars) > charLen) {
                 int len = (strlen(keyboardChars) - charLen);
                 fprintf(stderr, "Added keys %d , %d", charLen, len);
-                char* substr[(strlen(keyboardChars) + charLen)+1];
+                int charsize = (strlen(keyboardChars) + charLen)+1;
+                char substr[charsize];
                 strncpy(substr, keyboardChars + charLen, len);
                 
                 substr[len] = '\0';
@@ -438,9 +440,7 @@ static void keyboardQueuer(void *args)
 
 
 static void kbdHandler(rfbBool down, rfbKeySym key, rfbClientPtr client) {
-    ScreenData *screenData = client->screen->screenData;
     if (down) {
-        char json[14 + 2 + 1];
         char character[2 + 1];
         int validSpecialKey = 0;
 
