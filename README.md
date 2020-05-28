@@ -12,10 +12,10 @@ This does not require the device to be jailbroken.
 
 * Clone this repository
 * Install dependencies:
-	* brew install libimobiledevice
-	* brew install libpng
-	* brew install libvncserver
-	* brew install carthage
+	* `brew install libimobiledevice`
+	* `brew install libpng`
+	* `brew install libvncserver`
+	* `brew install carthage`
 
 * Now you can build the project:
 	* `cd iOSVNCServer && make build`
