@@ -18,12 +18,12 @@ This does not require the device to be jailbroken.
 	* brew install carthage
 
 * Now you can build the project:
-	* cd iOSVNCServer && make build
+	* `cd iOSVNCServer && make build`
 
 ## Dependencies
 To control the device, you will need to set up [WebdriverAgent](https://github.com/appium/WebDriverAgent)
 This project exposes a couple of endpoints to take control of the device.
-Once you've set this up correctly (signing and ./Scripts/bootstrap.sh), you can run the WebDriverAgent project to expose the endpoint.
+Once you've set this up correctly (signing and `./Scripts/bootstrap.sh`), you can run the WebDriverAgent project to expose the endpoint.
 
 ## Getting Started
 The WebDriverAgent project will output a response `ServerURLHere->http://[SOME_IP]:8100<-ServerURLHere`
@@ -32,7 +32,8 @@ These values are required and need to be passed to our `iosvncserver`, together 
 * To get the udid: `idevice_id -l`
 * Start a WebDriverAgent session: `curl -X POST -H "Content-Type: application/json" \
 -d "{\"desiredCapabilities\":{\"bundleId\":\"com.apple.preferences\"}}" \
-[SOME_IP]:8100/session`
+[SOME_IP]:8100/session
+`
 * Copy the sessionID from this response and pass it to our VNC server:
 
 You can now run the VNC server:
