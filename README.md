@@ -1,8 +1,6 @@
-## iOS VNC Server
+## [DEPRECATED] iOS VNC Server
 
-We've been using this in production for the last 3 years at TestingBot.com
-TestingBot Users can take control of a real iOS device through our website.
-They can view the device's screen and send taps/keyboard events to the device.
+We are no longer maintaining this repository.
 
 This project provides a VNC endpoint which streams the device's screen to your VNC client.
 Any keyboard and mouse events your VNC client sends will be sent to the iOS device.
